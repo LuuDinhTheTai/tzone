@@ -7,8 +7,7 @@ import (
 )
 
 func HomePage() g.Node {
-	return shared.BaseLayout("GSMArena.com - mobile phone reviews, news, specifications and more...", g.Group([]g.Node{
-		shared.Header(),
+	return shared.BaseLayout("GSMArena.com - mobile phone reviews, news, specifications and more...",
 		h.Div(h.ID("wrapper"), h.Class("l-container"),
 			h.Div(h.ID("outer"), h.Class("row"),
 				//SubHeader(),
@@ -19,8 +18,7 @@ func HomePage() g.Node {
 				),
 			),
 		),
-		shared.Footer(),
-	}))
+	)
 }
 
 func SubHeader() g.Node {

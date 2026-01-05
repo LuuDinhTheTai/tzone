@@ -131,7 +131,11 @@ __tcfapi("addEventListener", 2, function(tcData, success) {
 			h.Body(
 				h.Script(h.Type("text/javascript"), h.Src("https://fdn.gsmarena.com/vv/assets12/js/misc.js?v=128")),
 
+				Header(),
+
 				children,
+
+				Footer(),
 
 				h.Script(h.Type("text/javascript"), h.Src("https://fdn.gsmarena.com/vv/assets12/js/autocomplete.js?v=16")),
 				h.Script(h.Type("text/javascript"), h.Lang("javascript"), g.Raw(`
