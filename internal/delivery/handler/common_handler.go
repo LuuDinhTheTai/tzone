@@ -14,5 +14,5 @@ func NewCommonHandler() *CommonHandler {
 }
 
 func (h *CommonHandler) IndexHandler(ctx *gin.Context) {
-	response.HTML(ctx, page.IndexPage())
+	response.HTML(ctx, page.HomePage())
 }
