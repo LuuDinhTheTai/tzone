@@ -7,8 +7,41 @@ import (
 	"maragu.dev/gomponents"
 )
 
-func JSON(ctx *gin.Context, status int, data interface{}) {
+type ApiResponse struct {
+	Success bool            `json:"success"`
+	Code    int             `json:"code"`
+	Message string          `json:"message,omitempty"`
+	Data    interface{}     `json:"data,omitempty"`
+	Errors  []ErrorResponse `json:"errors,omitempty"`
+	Meta    MetaResponse    `json:"meta,omitempty"`
+}
 
+type ErrorResponse struct {
+	Field string `json:"field"`
+	Error string `json:"error"`
+}
+
+type MetaResponse struct {
+	Timestamp string `json:"timestamp"`
+	RequestId string `json:"request_id"`
+}
+
+func Success(ctx *gin.Context, code int, msg string, data interface{}) {
+	ctx.JSON(code, ApiResponse{
+		Success: true,
+		Code:    code,
+		Message: msg,
+		Data:    data,
+	})
+}
+
+func Error(ctx *gin.Context, code int, msg string, errorResponse []ErrorResponse) {
+	ctx.JSON(code, ApiResponse{
+		Success: false,
+		Code:    code,
+		Message: msg,
+		Errors:  errorResponse,
+	})
 }
 
 func HTML(ctx *gin.Context, node gomponents.Node) {
