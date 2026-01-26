@@ -16,11 +16,16 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	MongoDBConfig MongoDBConfig
+	MongoDbAtlas MongoDBConfig
+	Supabase     SupabaseConfig
 }
 
 type MongoDBConfig struct {
-	URI string
+	URL string
+}
+
+type SupabaseConfig struct {
+	URL string
 }
 
 func LoadEnv() Config {
@@ -31,15 +36,20 @@ func LoadEnv() Config {
 
 	port := os.Getenv("SERVER_PORT")
 
-	uri := os.Getenv("MONGODB_DATABASE_URI")
+	uri := os.Getenv("MONGODB_ATLAS_URL")
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
 
 	return Config{
 		Server: ServerConfig{
 			Port: port,
 		},
 		Database: DatabaseConfig{
-			MongoDBConfig: MongoDBConfig{
-				URI: uri,
+			MongoDbAtlas: MongoDBConfig{
+				URL: uri,
+			},
+			Supabase: SupabaseConfig{
+				URL: supabaseURL,
 			},
 		},
 	}
