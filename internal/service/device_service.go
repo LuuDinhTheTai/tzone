@@ -3,10 +3,10 @@ package service
 import "github.com/LuuDinhTheTai/tzone/internal/repository"
 
 type DeviceService struct {
-	mongoDbRepo *repository.MongoDbRepository
+	mongoDbRepo *repository.BrandRepository
 }
 
-func NewDeviceService(mongoDbRepo *repository.MongoDbRepository) *DeviceService {
+func NewDeviceService(mongoDbRepo *repository.BrandRepository) *DeviceService {
 	return &DeviceService{
 		mongoDbRepo: mongoDbRepo,
 	}

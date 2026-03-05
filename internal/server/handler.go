@@ -10,8 +10,17 @@ import (
 )
 
 func (s *Server) MapHandlers() error {
+	// Check if MongoDB is available
+	if !s.HasMongoDB() {
+		log.Println("⚠️ MongoDB is not available, brand routes will not work properly")
+	}
+
 	// Init repository
 	mongoDBRepo := repository.NewMongoDbRepository()
+	if s.HasMongoDB() {
+		mongoDBRepo.SetClient(s.mongoClient)
+		log.Printf("✅ MongoDB client set in repository")
+	}
 	//postgreRepo := repository.NewPostgreRepository()
 	log.Printf("✅ Repositories initialized")
 
