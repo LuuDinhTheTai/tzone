@@ -5,8 +5,10 @@ import (
 
 	"github.com/LuuDinhTheTai/tzone/internal/delivery/handler"
 	"github.com/LuuDinhTheTai/tzone/internal/delivery/route"
+	"github.com/LuuDinhTheTai/tzone/internal/model"
 	"github.com/LuuDinhTheTai/tzone/internal/repository"
 	"github.com/LuuDinhTheTai/tzone/internal/service"
+	// "github.com/supabase-community/postgrest-go"
 )
 
 func (s *Server) MapHandlers() error {
@@ -16,6 +18,29 @@ func (s *Server) MapHandlers() error {
 	}
 
 	// Init repository
+	mongoDBRepo := repository.NewMongoDbRepository()
+	
+	// AutoMigrate missing tables (Users, RefreshTokens, and the newly added RBAC tables)
+	s.db.AutoMigrate(
+		&model.User{},
+		&model.RefreshToken{},
+		&model.Role{},
+		&model.UserRole{},
+		&model.Action{},
+		&model.Resource{},
+		&model.Permission{},
+		&model.RolePermission{},
+	)
+	
+	userRepo := repository.NewUserRepository(s.db)
+	tokenRepo := repository.NewRefreshTokenRepository(s.db)
+	permissionRepo := repository.NewPermissionRepository(s.db)
+	log.Printf("✅ Repositories initialized")
+
+	// Init service
+	brandService := service.NewBrandService(mongoDBRepo)
+	deviceService := service.NewDeviceService(mongoDBRepo)
+	permissionService := service.NewPermissionService(permissionRepo)
 	brandRepo := repository.NewBrandRepository()
 	deviceRepo := repository.NewBrandRepository()
 	if s.HasMongoDB() {
@@ -41,5 +66,13 @@ func (s *Server) MapHandlers() error {
 	route.MapBrandRoutes(s.r, brandHandler)
 	route.MapDeviceRoutes(s.r, deviceHandler)
 	log.Printf("✅ Routes initialized")
+	//
+	authService := service.NewAuthService(userRepo, tokenRepo)
+	authHandler := handler.NewAuthHandler(authService)
+	route.MapAuthRoutes(s.r, authHandler)
+
+	// Keep compiler happy since permissionService is meant to be used in protected routes
+	_ = permissionService
+
 	return nil
 }
