@@ -307,11 +307,34 @@
         },
         {
           "name": "Get All Brands",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const res = pm.response.json();",
+                  "pm.test('Response has paginated brands', function () {",
+                  "  pm.expect(res.success).to.eql(true);",
+                  "  pm.expect(Array.isArray(res.data.brands)).to.eql(true);",
+                  "  pm.expect(res.data.pagination.page).to.eql(1);",
+                  "  pm.expect(res.data.pagination.limit).to.eql(10);",
+                  "  pm.expect(res.data.brands.length).to.be.at.most(10);",
+                  "  pm.expect(typeof res.data.pagination.has_next).to.eql('boolean');",
+                  "  pm.expect(typeof res.data.pagination.has_prev).to.eql('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/brands",
+              "raw": "{{baseUrl}}/api/v1/brands?page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -319,6 +342,16 @@
                 "api",
                 "v1",
                 "brands"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -455,11 +488,34 @@
         },
         {
           "name": "Get All Devices",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const res = pm.response.json();",
+                  "pm.test('Response has paginated devices', function () {",
+                  "  pm.expect(res.success).to.eql(true);",
+                  "  pm.expect(Array.isArray(res.data.devices)).to.eql(true);",
+                  "  pm.expect(res.data.pagination.page).to.eql(1);",
+                  "  pm.expect(res.data.pagination.limit).to.eql(10);",
+                  "  pm.expect(res.data.devices.length).to.be.at.most(10);",
+                  "  pm.expect(typeof res.data.pagination.has_next).to.eql('boolean');",
+                  "  pm.expect(typeof res.data.pagination.has_prev).to.eql('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/devices",
+              "raw": "{{baseUrl}}/api/v1/devices?page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -467,6 +523,16 @@
                 "api",
                 "v1",
                 "devices"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },

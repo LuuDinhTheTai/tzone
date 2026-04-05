@@ -96,11 +96,24 @@ func (h *BrandHandler) GetBrandById(ctx *gin.Context) {
 // @Tags brands
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page (max 100)" default(10)
 // @Success 200 {object} response.ApiResponse{data=dto.BrandListResponse}
 // @Failure 500 {object} response.ApiResponse
 // @Router /api/v1/brands [get]
 func (h *BrandHandler) GetAllBrands(ctx *gin.Context) {
-	brands, err := h.brandService.GetAllBrands(ctx.Request.Context())
+	var pagination dto.PaginationQuery
+	if err := ctx.ShouldBindQuery(&pagination); err != nil {
+		log.Printf("❌ Invalid pagination query: %v", err)
+		response.Error(ctx, http.StatusBadRequest, "Invalid pagination query", []response.ErrorResponse{
+			{Field: "query", Error: err.Error()},
+		})
+		return
+	}
+
+	pagination.Normalize()
+
+	brands, err := h.brandService.GetAllBrands(ctx.Request.Context(), pagination.Page, pagination.Limit)
 	if err != nil {
 		log.Printf("❌ Failed to get all brands: %v", err)
 		response.Error(ctx, http.StatusInternalServerError, "Failed to retrieve brands", []response.ErrorResponse{

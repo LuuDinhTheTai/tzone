@@ -2,6 +2,31 @@ package dto
 
 import "github.com/LuuDinhTheTai/tzone/internal/model"
 
+const (
+	DefaultPage  = 1
+	DefaultLimit = 10
+	MaxLimit     = 100
+)
+
+type PaginationQuery struct {
+	Page  int `form:"page"`
+	Limit int `form:"limit"`
+}
+
+func (q *PaginationQuery) Normalize() {
+	if q.Page < 1 {
+		q.Page = DefaultPage
+	}
+
+	if q.Limit < 1 {
+		q.Limit = DefaultLimit
+	}
+
+	if q.Limit > MaxLimit {
+		q.Limit = MaxLimit
+	}
+}
+
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`

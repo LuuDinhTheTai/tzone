@@ -74,11 +74,11 @@ func (s *DeviceService) GetDeviceById(ctx context.Context, id string) (*dto.Devi
 	return response, nil
 }
 
-// GetAllDevices retrieves all devices
-func (s *DeviceService) GetAllDevices(ctx context.Context) (*dto.DeviceListResponse, error) {
-	log.Printf("🔄 Fetching all devices")
+// GetAllDevices retrieves paginated devices
+func (s *DeviceService) GetAllDevices(ctx context.Context, page int, limit int) (*dto.DeviceListResponse, error) {
+	log.Printf("🔄 Fetching devices (page=%d, limit=%d)", page, limit)
 
-	devices, _, err := s.mongoDbRepo.GetAllDevices(ctx)
+	devices, total, err := s.mongoDbRepo.GetAllDevices(ctx, page, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all devices: %w", err)
 	}
@@ -94,8 +94,9 @@ func (s *DeviceService) GetAllDevices(ctx context.Context) (*dto.DeviceListRespo
 	}
 
 	response := &dto.DeviceListResponse{
-		Devices: deviceResponses,
-		Total:   len(deviceResponses),
+		Devices:    deviceResponses,
+		Total:      int(total),
+		Pagination: buildPaginationMeta(total, page, limit),
 	}
 
 	log.Printf("✅ Retrieved %d devices", response.Total)

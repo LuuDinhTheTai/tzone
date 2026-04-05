@@ -72,14 +72,22 @@ func (r *BrandRepository) GetBrandById(ctx context.Context, id string) (*model.B
 	return &brand, nil
 }
 
-// GetAllBrands retrieves all brands from MongoDB
-func (r *BrandRepository) GetAllBrands(ctx context.Context) ([]model.Brand, error) {
+// GetAllBrands retrieves paginated brands from MongoDB
+func (r *BrandRepository) GetAllBrands(ctx context.Context, page int, limit int) ([]model.Brand, int64, error) {
 	collection := r.GetBrandCollection()
+	skip := int64((page - 1) * limit)
 
-	cursor, err := collection.Find(ctx, bson.M{})
+	total, err := collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		log.Printf("❌ Error counting brands: %v", err)
+		return nil, 0, fmt.Errorf("failed to count brands: %w", err)
+	}
+
+	opts := options.Find().SetSkip(skip).SetLimit(int64(limit)).SetSort(bson.M{"_id": -1})
+	cursor, err := collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		log.Printf("❌ Error fetching brands: %v", err)
-		return nil, fmt.Errorf("failed to fetch brands: %w", err)
+		return nil, 0, fmt.Errorf("failed to fetch brands: %w", err)
 	}
 	defer func() {
 		if err := cursor.Close(ctx); err != nil {
@@ -90,11 +98,11 @@ func (r *BrandRepository) GetAllBrands(ctx context.Context) ([]model.Brand, erro
 	var brands []model.Brand
 	if err = cursor.All(ctx, &brands); err != nil {
 		log.Printf("❌ Error decoding brands: %v", err)
-		return nil, fmt.Errorf("failed to decode brands: %w", err)
+		return nil, 0, fmt.Errorf("failed to decode brands: %w", err)
 	}
 
 	log.Printf("✅ Retrieved %d brands", len(brands))
-	return brands, nil
+	return brands, total, nil
 }
 
 // UpdateBrand updates an existing brand in MongoDB
@@ -240,13 +248,52 @@ func (r *BrandRepository) GetDeviceById(ctx context.Context, id string) (*model.
 	return &result.Devices[0], result.BrandID.Hex(), nil
 }
 
-// GetAllDevices retrieves all devices from MongoDB
-func (r *BrandRepository) GetAllDevices(ctx context.Context) ([]model.Device, string, error) {
-	opts := options.Find().SetProjection(bson.M{"devices": 1})
-	cursor, err := r.GetBrandCollection().Find(ctx, bson.M{}, opts)
+// GetAllDevices retrieves paginated devices from all brand documents
+func (r *BrandRepository) GetAllDevices(ctx context.Context, page int, limit int) ([]model.Device, int64, error) {
+	collection := r.GetBrandCollection()
+	skip := int64((page - 1) * limit)
+
+	countPipeline := mongo.Pipeline{
+		{{Key: "$unwind", Value: "$devices"}},
+		{{Key: "$count", Value: "total"}},
+	}
+
+	countCursor, err := collection.Aggregate(ctx, countPipeline)
+	if err != nil {
+		log.Printf("❌ Error counting devices: %v", err)
+		return nil, 0, fmt.Errorf("failed to count devices: %w", err)
+	}
+	defer func() {
+		if err := countCursor.Close(ctx); err != nil {
+			log.Printf("⚠️ Error closing count cursor: %v", err)
+		}
+	}()
+
+	var countResults []struct {
+		Total int64 `bson:"total"`
+	}
+	if err := countCursor.All(ctx, &countResults); err != nil {
+		log.Printf("❌ Error decoding device count: %v", err)
+		return nil, 0, fmt.Errorf("failed to decode device count: %w", err)
+	}
+
+	var total int64
+	if len(countResults) > 0 {
+		total = countResults[0].Total
+	}
+
+	dataPipeline := mongo.Pipeline{
+		{{Key: "$unwind", Value: "$devices"}},
+		{{Key: "$replaceRoot", Value: bson.M{"newRoot": "$devices"}}},
+		{{Key: "$sort", Value: bson.M{"_id": -1}}},
+		{{Key: "$skip", Value: skip}},
+		{{Key: "$limit", Value: int64(limit)}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, dataPipeline)
 	if err != nil {
 		log.Printf("❌ Error fetching devices: %v", err)
-		return nil, "", err
+		return nil, 0, fmt.Errorf("failed to fetch devices: %w", err)
 	}
 	defer func() {
 		if err := cursor.Close(ctx); err != nil {
@@ -254,21 +301,12 @@ func (r *BrandRepository) GetAllDevices(ctx context.Context) ([]model.Device, st
 		}
 	}()
 
-	var brands []struct {
-		BrandID bson.ObjectID  `bson:"_id"`
-		Devices []model.Device `bson:"devices"`
-	}
-
-	if err = cursor.All(ctx, &brands); err != nil {
+	var devices []model.Device
+	if err = cursor.All(ctx, &devices); err != nil {
 		log.Printf("❌ Error decoding devices: %v", err)
-		return nil, "", err
+		return nil, 0, fmt.Errorf("failed to decode devices: %w", err)
 	}
 
-	var allDevices []model.Device
-	for _, b := range brands {
-		allDevices = append(allDevices, b.Devices...)
-	}
-
-	log.Printf("✅ Retrieved %d devices across all brands", len(allDevices))
-	return allDevices, "", nil
+	log.Printf("✅ Retrieved %d devices across all brands", len(devices))
+	return devices, total, nil
 }

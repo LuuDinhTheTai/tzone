@@ -21,6 +21,22 @@ func NewBrandService(mongoDbRepo *repository.BrandRepository) *BrandService {
 	}
 }
 
+func buildPaginationMeta(total int64, page int, limit int) dto.PaginationMeta {
+	totalPages := 0
+	if total > 0 {
+		totalPages = int((total + int64(limit) - 1) / int64(limit))
+	}
+
+	return dto.PaginationMeta{
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+		HasNext:    int64(page*limit) < total,
+		HasPrev:    page > 1,
+	}
+}
+
 // CreateBrand creates a new brand
 func (s *BrandService) CreateBrand(ctx context.Context, req dto.CreateBrandRequest) (*dto.BrandResponse, error) {
 	log.Printf("🔄 Creating brand: %s", req.Name)
@@ -60,11 +76,11 @@ func (s *BrandService) GetBrandById(ctx context.Context, id string) (*dto.BrandR
 	return response, nil
 }
 
-// GetAllBrands retrieves all brands
-func (s *BrandService) GetAllBrands(ctx context.Context) (*dto.BrandListResponse, error) {
-	log.Printf("🔄 Fetching all brands")
+// GetAllBrands retrieves paginated brands
+func (s *BrandService) GetAllBrands(ctx context.Context, page int, limit int) (*dto.BrandListResponse, error) {
+	log.Printf("🔄 Fetching brands (page=%d, limit=%d)", page, limit)
 
-	brands, err := s.mongoDbRepo.GetAllBrands(ctx)
+	brands, total, err := s.mongoDbRepo.GetAllBrands(ctx, page, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all brands: %w", err)
 	}
@@ -78,8 +94,9 @@ func (s *BrandService) GetAllBrands(ctx context.Context) (*dto.BrandListResponse
 	}
 
 	response := &dto.BrandListResponse{
-		Brands: brandResponses,
-		Total:  len(brandResponses),
+		Brands:     brandResponses,
+		Total:      int(total),
+		Pagination: buildPaginationMeta(total, page, limit),
 	}
 
 	log.Printf("✅ Retrieved %d brands", response.Total)
