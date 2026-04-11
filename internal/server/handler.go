@@ -8,6 +8,7 @@ import (
 	"github.com/LuuDinhTheTai/tzone/internal/model"
 	"github.com/LuuDinhTheTai/tzone/internal/repository"
 	"github.com/LuuDinhTheTai/tzone/internal/service"
+	"github.com/LuuDinhTheTai/tzone/util/seed"
 )
 
 func (s *Server) MapHandlers() error {
@@ -27,6 +28,9 @@ func (s *Server) MapHandlers() error {
 		&model.Permission{},
 		&model.RolePermission{},
 	)
+
+	// Seed RBAC data
+	seed.SeedAll(s.db)
 
 	// Init repository
 	userRepo := repository.NewUserRepository(s.db)
