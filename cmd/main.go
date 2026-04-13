@@ -4,7 +4,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"strings"
 
 	"github.com/LuuDinhTheTai/tzone/infrastructure/configuration"
 	"github.com/LuuDinhTheTai/tzone/infrastructure/database"
@@ -35,22 +34,11 @@ func main() {
 	// Connect to PostgreSQL
 	var db *gorm.DB
 
-	if cfg.Database.Supabase.URL != "" {
-		// Add prepared_statement_cache_size=0 to disable prepared statement caching
-		// This prevents "prepared statement already exists" errors
-		dsn := cfg.Database.Supabase.URL
-		if !strings.Contains(dsn, "prepared_statement_cache_size") {
-			separator := "?"
-			if strings.Contains(dsn, "?") {
-				separator = "&"
-			}
-			dsn = dsn + separator + "prepared_statement_cache_size=0"
-		}
-
-		// Also disable prepared statements in the driver to avoid any caching issues
+	if cfg.Database.Postgres.DSN != "" {
+		// Disable prepared statements in the driver to avoid caching issues.
 		dbTemp, err := gorm.Open(
 			postgres.New(postgres.Config{
-				DSN:                  dsn,
+				DSN:                  cfg.Database.Postgres.DSN,
 				PreferSimpleProtocol: true, // Disable prepared statements entirely
 			}),
 			&gorm.Config{},
@@ -68,8 +56,8 @@ func main() {
 	// Connect to MongoDB
 	var mongoClient interface{}
 
-	if cfg.Database.MongoDbAtlas.URL != "" {
-		client, ctx, cancel, errDB := database.Connect(cfg.Database.MongoDbAtlas.URL)
+	if cfg.Database.MongoDB.URL != "" {
+		client, ctx, cancel, errDB := database.Connect(cfg.Database.MongoDB.URL)
 		if errDB != nil {
 			log.Printf("❌ MongoDB connection failed: %v", errDB)
 			slog.Error("MongoDB connect error", "error", errDB)

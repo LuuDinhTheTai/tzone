@@ -1,0 +1,9 @@
+.git
+.gitignore
+README.md
+docs
+fe/node_modules
+fe/dist
+fe/.vite
+**/*.log
+

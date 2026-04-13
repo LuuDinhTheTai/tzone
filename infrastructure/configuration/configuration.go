@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -18,12 +19,17 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	MongoDbAtlas MongoDBConfig
-	Supabase     SupabaseConfig
+	MongoDB  MongoDBConfig
+	Postgres PostgresConfig
+	Supabase SupabaseConfig
 }
 
 type MongoDBConfig struct {
 	URL string
+}
+
+type PostgresConfig struct {
+	DSN string
 }
 
 type SupabaseConfig struct {
@@ -54,20 +60,43 @@ func LoadEnv() Config {
 		log.Printf("✅ SERVER_PORT: %s", port)
 	}
 
-	// Load MONGODB_ATLAS_URL
-	mongoURI := os.Getenv("MONGODB_ATLAS_URL")
+	// Load MONGODB_URL (preferred), fallback to legacy MONGODB_ATLAS_URL
+	mongoURI := os.Getenv("MONGODB_URL")
 	if mongoURI == "" {
-		log.Println("⚠️ MONGODB_ATLAS_URL not set - MongoDB will not be available")
+		mongoURI = os.Getenv("MONGODB_ATLAS_URL")
+		if mongoURI != "" {
+			log.Println("⚠️ MONGODB_ATLAS_URL is deprecated, please use MONGODB_URL")
+		}
+	}
+	if mongoURI == "" {
+		log.Println("⚠️ MONGODB_URL not set - MongoDB will not be available")
 	} else {
-		log.Println("✅ MONGODB_ATLAS_URL configured")
+		log.Println("✅ MONGODB_URL configured")
 	}
 
-	// Load SUPABASE_URL
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	if supabaseURL == "" {
-		log.Println("⚠️ SUPABASE_URL not set - Supabase will not be available")
+	// Load POSTGRES_DSN (preferred), fallback to legacy SUPABASE_URL when it is a DSN
+	postgresDSN := os.Getenv("POSTGRES_DSN")
+	legacySupabaseURL := os.Getenv("SUPABASE_URL")
+	if postgresDSN == "" && legacySupabaseURL != "" && !strings.HasPrefix(legacySupabaseURL, "http") {
+		postgresDSN = legacySupabaseURL
+		log.Println("⚠️ SUPABASE_URL as DSN is deprecated, please use POSTGRES_DSN")
+	}
+	if postgresDSN == "" {
+		log.Println("⚠️ POSTGRES_DSN not set - PostgreSQL will not be available")
 	} else {
-		log.Println("✅ SUPABASE_URL configured")
+		log.Println("✅ POSTGRES_DSN configured")
+	}
+
+	// Load SUPABASE API URL (optional, for hosted Supabase client)
+	supabaseURL := os.Getenv("SUPABASE_API_URL")
+	if supabaseURL == "" && (strings.HasPrefix(legacySupabaseURL, "http://") || strings.HasPrefix(legacySupabaseURL, "https://")) {
+		supabaseURL = legacySupabaseURL
+		log.Println("⚠️ SUPABASE_URL for API client is deprecated, please use SUPABASE_API_URL")
+	}
+	if supabaseURL == "" {
+		log.Println("⚠️ SUPABASE_API_URL not set - Supabase API client will not be available")
+	} else {
+		log.Println("✅ SUPABASE_API_URL configured")
 	}
 
 	// Load SUPABASE_KEY
@@ -85,8 +114,11 @@ func LoadEnv() Config {
 			Port: port,
 		},
 		Database: DatabaseConfig{
-			MongoDbAtlas: MongoDBConfig{
+			MongoDB: MongoDBConfig{
 				URL: mongoURI,
+			},
+			Postgres: PostgresConfig{
+				DSN: postgresDSN,
 			},
 			Supabase: SupabaseConfig{
 				URL: supabaseURL,
@@ -105,7 +137,10 @@ func (c *Config) Validate() error {
 
 	// At least one database must be configured
 	hasDB := false
-	if c.Database.MongoDbAtlas.URL != "" {
+	if c.Database.MongoDB.URL != "" {
+		hasDB = true
+	}
+	if c.Database.Postgres.DSN != "" {
 		hasDB = true
 	}
 	if c.Database.Supabase.URL != "" && c.Database.Supabase.Key != "" {
@@ -113,7 +148,7 @@ func (c *Config) Validate() error {
 	}
 
 	if !hasDB {
-		return fmt.Errorf("at least one database (MongoDB or Supabase) must be configured")
+		return fmt.Errorf("at least one database (MongoDB or PostgreSQL/Supabase) must be configured")
 	}
 
 	return nil
