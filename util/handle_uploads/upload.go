@@ -5,13 +5,13 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SaveImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
-	
 	uploadDir := "uploads/devices"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("failed to create upload directory: %w", err)
@@ -24,5 +24,6 @@ func SaveImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 
-	return "/" + filePath, nil
+	webPath := "/" + strings.ReplaceAll(filePath, "\\", "/")
+	return webPath, nil
 }

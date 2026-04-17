@@ -7,6 +7,19 @@ import type {
   UpdateDeviceRequest,
 } from '../types';
 
+const buildDeviceFormData = (data: CreateDeviceRequest | UpdateDeviceRequest) => {
+  const formData = new FormData();
+  formData.append('brand_id', data.brand_id);
+  formData.append('model_name', data.model_name);
+  formData.append('specifications', JSON.stringify(data.specifications || {}));
+
+  if (data.image) {
+    formData.append('image', data.image);
+  }
+
+  return formData;
+};
+
 export const devicesApi = {
   getAll: (page = 1, limit = 10) =>
     client.get<ApiResponse<DeviceListResponse>>('/api/v1/devices', {
@@ -22,10 +35,14 @@ export const devicesApi = {
     }),
 
   create: (data: CreateDeviceRequest) =>
-    client.post<ApiResponse<Device>>('/api/v1/devices', data),
+    client.post<ApiResponse<Device>>('/api/v1/devices', buildDeviceFormData(data), {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 
   update: (id: string, data: UpdateDeviceRequest) =>
-    client.put<ApiResponse<Device>>(`/api/v1/devices/${id}`, data),
+    client.put<ApiResponse<Device>>(`/api/v1/devices/${id}`, buildDeviceFormData(data), {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 
   delete: (id: string) =>
     client.delete<ApiResponse>(`/api/v1/devices/${id}`),

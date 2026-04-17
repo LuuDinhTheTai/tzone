@@ -4,6 +4,7 @@ import { devicesApi } from '../api/devices';
 import type { Device } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { BarChart3, Plus, X, Smartphone, Search } from 'lucide-react';
+import { resolveDeviceImageUrl } from '../utils/resolveDeviceImageUrl';
 
 export default function ComparePage() {
   const [searchParams] = useSearchParams();
@@ -119,7 +120,7 @@ export default function ComparePage() {
               <div className="glass rounded-2xl p-4 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-xl bg-surface-light flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {device.imageUrl ? (
-                    <img src={device.imageUrl} alt={device.model_name} className="max-h-full w-auto object-contain" />
+                    <img src={resolveDeviceImageUrl(device.imageUrl)} alt={device.model_name} className="max-h-full w-auto object-contain" />
                   ) : (
                     <Smartphone size={24} className="text-text-muted" />
                   )}
@@ -173,7 +174,7 @@ export default function ComparePage() {
                     >
                       <div className="w-8 h-8 rounded-lg bg-surface-lighter flex items-center justify-center flex-shrink-0">
                         {d.imageUrl ? (
-                          <img src={d.imageUrl} alt="" className="max-h-full w-auto object-contain" />
+                          <img src={resolveDeviceImageUrl(d.imageUrl)} alt="" className="max-h-full w-auto object-contain" />
                         ) : (
                           <Smartphone size={14} className="text-text-muted" />
                         )}

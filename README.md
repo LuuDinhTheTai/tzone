@@ -68,6 +68,8 @@ docker compose up --build
 - PostgreSQL được khởi tạo với extension `pgcrypto` để GORM có thể tạo UUID mặc định.
 - MongoDB sẽ được import lại toàn bộ collection `brands` trong database `Cluster0` từ file `phone.json`.
 - API container dùng biến môi trường `POSTGRES_DSN` như chuỗi kết nối PostgreSQL local, còn `MONGODB_URL` trỏ tới MongoDB container.
+- Dữ liệu device đã seed sẽ tiếp tục dùng `imageUrl` dạng URL bên ngoài như trong `phone.json`.
+- Device tạo mới/cập nhật từ UI sẽ upload ảnh vào thư mục local `uploads/devices` và API phục vụ qua đường dẫn `/uploads/...`.
 
 Mật khẩu mặc định cho PostgreSQL local trong compose là:
 
@@ -371,15 +373,18 @@ GET /devices
 #### Tạo Thiết Bị Mới
 ```http
 POST /devices
-Content-Type: application/json
+Content-Type: multipart/form-data
 
 {
   "model_name": "Samsung Galaxy S24",
-  "imageUrl": "https://example.com/image.jpg",
+  "brand_id": "...",
+  "image": "<file upload>",
   "specifications": { /* full specifications object */ }
 }
 ```
 **Response:** `201 Created`
+
+> Ghi chú: device seed vẫn có thể dùng ảnh URL từ nguồn ngoài, nhưng các device tạo mới/cập nhật sẽ lưu ảnh local để frontend load qua `/uploads`.
 
 #### Lấy Chi Tiết Thiết Bị
 ```http
@@ -390,10 +395,12 @@ GET /devices/:id
 #### Cập Nhật Thiết Bị
 ```http
 PUT /devices/:id
-Content-Type: application/json
+Content-Type: multipart/form-data
 
 {
   "model_name": "Updated Name",
+  "brand_id": "...",
+  "image": "<file upload optional>",
   "specifications": { /* updated specs */ }
 }
 ```

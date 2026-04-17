@@ -5,6 +5,7 @@ import type { Device, Brand, PaginationMeta, Specifications } from '../../types'
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Pagination from '../../components/ui/Pagination';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { resolveDeviceImageUrl } from '../../utils/resolveDeviceImageUrl';
 import { Plus, Pencil, Trash2, X, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -34,7 +35,9 @@ export default function DeviceManagePage() {
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Device | null>(null);
-  const [form, setForm] = useState({ brandId: '', modelName: '', imageUrl: '' });
+  const [form, setForm] = useState({ brandId: '', modelName: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [specs, setSpecs] = useState<Specifications>(emptySpecs);
   const [saving, setSaving] = useState(false);
 
@@ -45,6 +48,14 @@ export default function DeviceManagePage() {
   useEffect(() => {
     brandsApi.getAll(1, 100).then(({ data }) => setBrands(data.data?.brands || []));
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   useEffect(() => {
     fetchDevices(page);
@@ -65,7 +76,9 @@ export default function DeviceManagePage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ brandId: '', modelName: '', imageUrl: '' });
+    setForm({ brandId: '', modelName: '' });
+    setImageFile(null);
+    setImagePreview('');
     setSpecs(JSON.parse(JSON.stringify(emptySpecs)));
     setModalOpen(true);
   };
@@ -75,10 +88,26 @@ export default function DeviceManagePage() {
     setForm({
       brandId: device.brand_id || '',
       modelName: device.model_name || '',
-      imageUrl: device.imageUrl || '',
     });
+    setImageFile(null);
+    setImagePreview(resolveDeviceImageUrl(device.imageUrl));
     setSpecs(device.specifications || JSON.parse(JSON.stringify(emptySpecs)));
     setModalOpen(true);
+  };
+
+  const handleImageChange = (file?: File) => {
+    if (imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(editing ? resolveDeviceImageUrl(editing.imageUrl) : '');
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const updateSpec = (section: string, field: string, value: string) => {
@@ -96,12 +125,17 @@ export default function DeviceManagePage() {
       toast.error('Brand and model name are required');
       return;
     }
+    if (!editing && !imageFile) {
+      toast.error('Image is required when creating a device');
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
         await devicesApi.update(editing.id!, {
           brand_id: form.brandId,
           model_name: form.modelName,
+          image: imageFile || undefined,
           specifications: specs,
         });
         toast.success('Device updated');
@@ -109,7 +143,7 @@ export default function DeviceManagePage() {
         await devicesApi.create({
           brand_id: form.brandId,
           model_name: form.modelName,
-          imageUrl: form.imageUrl,
+          image: imageFile!,
           specifications: specs,
         });
         toast.success('Device created');
@@ -296,7 +330,7 @@ export default function DeviceManagePage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-surface-lighter flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {device.imageUrl ? (
-                            <img src={device.imageUrl} alt="" className="max-h-full w-auto object-contain" />
+                            <img src={resolveDeviceImageUrl(device.imageUrl)} alt="" className="max-h-full w-auto object-contain" />
                           ) : (
                             <Smartphone size={16} className="text-text-muted" />
                           )}
@@ -383,14 +417,20 @@ export default function DeviceManagePage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">Image URL</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                  Device Image {editing ? '(optional when updating)' : ''}
+                </label>
                 <input
-                  type="text"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e.target.files?.[0])}
                   className="w-full px-3 py-2.5 rounded-xl bg-surface-light border border-border text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-all"
                 />
+                {imagePreview && (
+                  <div className="mt-3 w-28 h-28 rounded-xl bg-surface-lighter border border-border overflow-hidden flex items-center justify-center">
+                    <img src={imagePreview} alt="Preview" className="max-h-full w-auto object-contain" />
+                  </div>
+                )}
               </div>
             </div>
 

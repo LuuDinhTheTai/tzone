@@ -5,6 +5,7 @@ import { devicesApi } from '../api/devices';
 import type { Brand, Device } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { ChevronRight, Smartphone, ArrowLeft } from 'lucide-react';
+import { resolveDeviceImageUrl } from '../utils/resolveDeviceImageUrl';
 
 export default function BrandDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -90,7 +91,7 @@ export default function BrandDetailPage() {
               <div className="aspect-square bg-gradient-to-br from-surface-lighter/50 to-surface-light flex items-center justify-center p-6 overflow-hidden">
                 {device.imageUrl ? (
                   <img
-                    src={device.imageUrl}
+                    src={resolveDeviceImageUrl(device.imageUrl)}
                     alt={device.model_name}
                     className="max-h-full w-auto object-contain group-hover:scale-105 transition-transform duration-500"
                   />

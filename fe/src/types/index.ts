@@ -185,12 +185,13 @@ export interface UpdateBrandRequest {
 export interface CreateDeviceRequest {
   brand_id: string;
   model_name: string;
-  imageUrl: string;
+  image: File;
   specifications: Specifications;
 }
 
 export interface UpdateDeviceRequest {
   brand_id: string;
   model_name: string;
+  image?: File;
   specifications: Specifications;
 }

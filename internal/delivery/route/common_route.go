@@ -6,5 +6,6 @@ import (
 )
 
 func MapCommonRoutes(r *gin.Engine, commonHandler *handler.CommonHandler) {
+	r.Static("/uploads", "uploads")
 	r.GET("/", commonHandler.IndexHandler)
 }

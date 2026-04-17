@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { devicesApi } from '../api/devices';
 import type { Device } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { resolveDeviceImageUrl } from '../utils/resolveDeviceImageUrl';
 import {
   ChevronRight, Smartphone, Wifi, Battery, Cpu, Monitor,
   Camera, Volume2, Ruler, Fingerprint, Info, ArrowLeft, BarChart3
@@ -175,7 +176,7 @@ export default function DeviceDetailPage() {
           <div className="w-48 h-48 md:w-64 md:h-64 bg-gradient-to-br from-surface-lighter/50 to-surface-light rounded-2xl flex items-center justify-center p-6 flex-shrink-0">
             {device.imageUrl ? (
               <img
-                src={device.imageUrl}
+                src={resolveDeviceImageUrl(device.imageUrl)}
                 alt={device.model_name}
                 className="max-h-full w-auto object-contain"
               />
