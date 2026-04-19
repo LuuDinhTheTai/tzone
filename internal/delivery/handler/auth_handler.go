@@ -20,7 +20,6 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 
 // register endpoint
 func (h *AuthHandler) Register(c *gin.Context) {
-
 	var req dto.RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -36,6 +35,33 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusCreated, "register success", nil)
+}
+
+func (h *AuthHandler) ChangePassword(c *gin.Context) {
+	userIDValue, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	var req dto.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	if err := h.authService.ChangePassword(userID, req.OldPassword, req.NewPassword); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "password changed successfully", nil)
 }
 
 // login endpoint

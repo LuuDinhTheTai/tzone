@@ -55,6 +55,29 @@ func (s *AuthService) Register(email string, password string) error {
 	return s.userRepo.Create(&user, model.RoleUser)
 }
 
+func (s *AuthService) ChangePassword(userID string, oldPassword string, newPassword string) error {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword))
+	if err != nil {
+		return errors.New("old password is incorrect")
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.New("failed to hash new password")
+	}
+
+	if err := s.userRepo.UpdatePasswordHash(userID, string(newHash)); err != nil {
+		return errors.New("failed to update password")
+	}
+
+	return nil
+}
+
 // login
 func (s *AuthService) Login(email string, password string) (string, string, *model.User, string, error) {
 

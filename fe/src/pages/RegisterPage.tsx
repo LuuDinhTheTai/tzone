@@ -14,16 +14,19 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
+
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
     }
+
     try {
-      await register(email, password);
+      await register(email.trim(), password);
       toast.success('Account created! Please sign in.');
       navigate('/login');
     } catch (err: any) {

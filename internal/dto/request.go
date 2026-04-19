@@ -46,6 +46,11 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required,min=6"`
+}
+
 // CreateBrandRequest represents the request body for creating a new brand
 type CreateBrandRequest struct {
 	Name string `json:"brand_name" binding:"required,min=1,max=100"`

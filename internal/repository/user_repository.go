@@ -46,6 +46,15 @@ func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
 	return &user, nil
 }
 
+func (r *UserRepository) FindByID(id string) (*model.User, error) {
+	var user model.User
+	err := r.db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // FindByEmailWithRole returns user with their role name
 func (r *UserRepository) FindByEmailWithRole(email string) (*model.User, string, error) {
 	var user model.User
@@ -73,4 +82,10 @@ func (r *UserRepository) FindByEmailWithRole(email string) (*model.User, string,
 	}
 
 	return &user, role.Name, nil
+}
+
+func (r *UserRepository) UpdatePasswordHash(userID string, passwordHash string) error {
+	return r.db.Model(&model.User{}).
+		Where("id = ?", userID).
+		Update("password_hash", passwordHash).Error
 }

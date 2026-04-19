@@ -15,4 +15,8 @@ func MapAuthRoutes(r *gin.Engine, h *handler.AuthHandler) {
 	auth.POST("/login", h.Login)
 	auth.POST("/refresh", h.RefreshToken)
 	auth.POST("/logout", h.Logout)
+
+	authProtected := auth.Group("")
+	authProtected.Use(middleware.JWTAuth())
+	authProtected.POST("/password/change", h.ChangePassword)
 }
