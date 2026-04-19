@@ -19,6 +19,7 @@ import (
 const (
 	otpPurposeRegister       = "register"
 	otpPurposeForgotPassword = "forgot_password"
+	otpPurposeChangePassword = "change_password"
 	otpTTL                   = 5 * time.Minute
 	otpMaxAttempts           = 5
 )
@@ -110,6 +111,15 @@ func (s *AuthService) SendResetPasswordOTP(emailAddr string) error {
 	return s.issueOTP(emailAddr, otpPurposeForgotPassword)
 }
 
+func (s *AuthService) SendChangePasswordOTP(userID string) error {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil || user == nil {
+		return errors.New("user not found")
+	}
+
+	return s.issueOTP(normalizeEmail(user.Email), otpPurposeChangePassword)
+}
+
 // register
 func (s *AuthService) Register(emailAddr string, password string, otp string) error {
 	emailAddr = normalizeEmail(emailAddr)
@@ -168,10 +178,14 @@ func (s *AuthService) ResetPassword(emailAddr string, otp string, newPassword st
 	return nil
 }
 
-func (s *AuthService) ChangePassword(userID string, oldPassword string, newPassword string) error {
+func (s *AuthService) ChangePassword(userID string, oldPassword string, newPassword string, otp string) error {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return errors.New("user not found")
+	}
+
+	if err := s.verifyOTP(normalizeEmail(user.Email), otpPurposeChangePassword, otp); err != nil {
+		return err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword))

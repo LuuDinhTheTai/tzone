@@ -25,6 +25,9 @@ export const authApi = {
   resetPassword: (data: ResetPasswordRequest) =>
     client.post<ApiResponse>('/auth/password/reset', data),
 
+  sendChangePasswordOtp: () =>
+    client.post<ApiResponse>('/auth/password/change/send-otp'),
+
   changePassword: (data: ChangePasswordRequest) =>
     client.post<ApiResponse>('/auth/password/change', data),
 

@@ -21,5 +21,6 @@ func MapAuthRoutes(r *gin.Engine, h *handler.AuthHandler) {
 
 	authProtected := auth.Group("")
 	authProtected.Use(middleware.JWTAuth())
+	authProtected.POST("/password/change/send-otp", h.SendChangePasswordOTP)
 	authProtected.POST("/password/change", h.ChangePassword)
 }

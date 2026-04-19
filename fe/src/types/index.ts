@@ -173,6 +173,7 @@ export interface ResetPasswordRequest {
 export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;
+  otp: string;
 }
 
 export interface AuthResponse {

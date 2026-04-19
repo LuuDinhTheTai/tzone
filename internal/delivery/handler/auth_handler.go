@@ -81,6 +81,27 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	response.Success(c, http.StatusOK, "password reset successfully", nil)
 }
 
+func (h *AuthHandler) SendChangePasswordOTP(c *gin.Context) {
+	userIDValue, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	if err := h.authService.SendChangePasswordOTP(userID); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "verification code sent", nil)
+}
+
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	userIDValue, ok := c.Get("user_id")
 	if !ok {
@@ -100,7 +121,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.authService.ChangePassword(userID, req.OldPassword, req.NewPassword); err != nil {
+	if err := h.authService.ChangePassword(userID, req.OldPassword, req.NewPassword, req.OTP); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
