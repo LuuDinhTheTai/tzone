@@ -112,97 +112,140 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Brands Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-text-primary">Popular Brands</h2>
-            <p className="text-sm text-text-muted mt-1">Explore devices from top manufacturers</p>
-          </div>
-          <Link
-            to="/brands"
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-light transition-colors"
-          >
-            View all <ChevronRight size={16} />
-          </Link>
-        </div>
-
-        {loading ? (
-          <LoadingSpinner text="Loading brands..." />
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {brands.map((brand) => (
-              <Link
-                key={brand.id}
-                to={`/brands/${brand.id}`}
-                className="glass rounded-xl p-5 text-center card-hover group"
-              >
-                <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-surface-lighter to-surface-light flex items-center justify-center mb-3 group-hover:from-primary/20 group-hover:to-accent/20 transition-all duration-300">
-                  <span className="text-xl font-bold gradient-text">
-                    {brand.brand_name?.[0]?.toUpperCase()}
-                  </span>
-                </div>
-                <h3 className="text-sm font-semibold text-text-primary">{brand.brand_name}</h3>
-                {/*<p className="text-xs text-text-muted mt-1">*/}
-                {/*  {brand.devices?.length || 0} devices*/}
-                {/*</p>*/}
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Latest Devices */}
+      {/* GSMArena-like stream + sidebar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-text-primary">Latest Devices</h2>
-            <p className="text-sm text-text-muted mt-1">Recently added smartphones</p>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8">
+            <div className="glass rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-border bg-surface-light/40 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-text-primary">Latest Devices</h2>
+                  <p className="text-xs text-text-muted mt-0.5">GSMArena-style quick browsing list</p>
+                </div>
+                <Link
+                  to="/finder"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-light"
+                >
+                  Open Finder <ChevronRight size={14} />
+                </Link>
+              </div>
 
-        {loading ? (
-          <LoadingSpinner text="Loading devices..." />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {devices.map((device) => (
-              <Link
-                key={device.id}
-                to={`/devices/${device.id}`}
-                className="glass rounded-2xl overflow-hidden card-hover group"
-              >
-                <div className="aspect-square bg-gradient-to-br from-surface-lighter/50 to-surface-light flex items-center justify-center p-6 overflow-hidden">
-                  {device.imageUrl ? (
-                    <img
-                      src={resolveDeviceImageUrl(device.imageUrl)}
-                      alt={device.model_name}
-                      className="max-h-full w-auto object-contain group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <Smartphone size={48} className="text-text-muted" />
-                  )}
+              {loading ? (
+                <div className="p-6">
+                  <LoadingSpinner text="Loading devices..." />
                 </div>
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-text-primary truncate">
-                    {device.model_name}
-                  </h3>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {device.specifications?.platform?.chipset && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium truncate max-w-full">
-                        {device.specifications.platform.chipset.split('(')[0].trim()}
-                      </span>
-                    )}
-                    {device.specifications?.display?.size && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">
-                        {device.specifications.display.size.split('(')[0].trim()}
-                      </span>
-                    )}
-                  </div>
+              ) : devices.length === 0 ? (
+                <div className="p-8 text-center text-text-secondary text-sm">No devices available.</div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {devices.map((device) => (
+                    <Link
+                      key={device.id}
+                      to={`/devices/${device.id}`}
+                      className="flex gap-4 p-4 sm:p-5 hover:bg-surface-light/40 transition-colors"
+                    >
+                      <div className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 rounded-lg bg-surface-light flex items-center justify-center overflow-hidden border border-border/60">
+                        {device.imageUrl ? (
+                          <img
+                            src={resolveDeviceImageUrl(device.imageUrl)}
+                            alt={device.model_name}
+                            className="max-h-full w-auto object-contain"
+                          />
+                        ) : (
+                          <Smartphone size={28} className="text-text-muted" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-semibold text-text-primary truncate">{device.model_name}</h3>
+                        <div className="mt-2 space-y-1 text-xs text-text-muted">
+                          {device.specifications?.platform?.os && (
+                            <p><span className="text-text-secondary">OS:</span> {device.specifications.platform.os}</p>
+                          )}
+                          {device.specifications?.platform?.chipset && (
+                            <p>
+                              <span className="text-text-secondary">Chipset:</span> {device.specifications.platform.chipset.split('(')[0].trim()}
+                            </p>
+                          )}
+                          {device.specifications?.display?.size && (
+                            <p><span className="text-text-secondary">Display:</span> {device.specifications.display.size.split('(')[0].trim()}</p>
+                          )}
+                          {device.specifications?.battery?.type && (
+                            <p><span className="text-text-secondary">Battery:</span> {device.specifications.battery.type}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="hidden sm:flex items-center text-primary">
+                        <ChevronRight size={18} />
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-            ))}
+              )}
+            </div>
           </div>
-        )}
+
+          <aside className="lg:col-span-4 space-y-5">
+            <div className="glass rounded-2xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-border bg-surface-light/40 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-text-primary">Brand Directory</h2>
+                <Link
+                  to="/brands"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-light"
+                >
+                  View all <ChevronRight size={14} />
+                </Link>
+              </div>
+
+              {loading ? (
+                <div className="p-4">
+                  <LoadingSpinner text="Loading brands..." />
+                </div>
+              ) : brands.length === 0 ? (
+                <div className="p-4 text-sm text-text-secondary">No brands found.</div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {brands.map((brand) => (
+                    <Link
+                      key={brand.id}
+                      to={`/brands/${brand.id}`}
+                      className="px-4 py-3 flex items-center gap-3 hover:bg-surface-light/40 transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-surface-lighter to-surface-light flex items-center justify-center border border-border/60">
+                        <span className="text-sm font-bold gradient-text">{brand.brand_name?.[0]?.toUpperCase()}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-text-primary truncate">{brand.brand_name}</p>
+                      </div>
+                      <ChevronRight size={14} className="text-text-muted" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="glass rounded-2xl p-4">
+              <h3 className="text-sm font-semibold text-text-primary mb-2">Quick Actions</h3>
+              <div className="space-y-2">
+                <Link
+                  to="/finder"
+                  className="flex items-center justify-between text-sm text-text-secondary hover:text-text-primary px-3 py-2 rounded-lg hover:bg-surface-light"
+                >
+                  Device Finder
+                  <ChevronRight size={14} />
+                </Link>
+                <Link
+                  to="/compare"
+                  className="flex items-center justify-between text-sm text-text-secondary hover:text-text-primary px-3 py-2 rounded-lg hover:bg-surface-light"
+                >
+                  Compare Devices
+                  <ChevronRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
     </div>
   );
