@@ -15,6 +15,7 @@ import BrandsPage from './pages/BrandsPage';
 import BrandDetailPage from './pages/BrandDetailPage';
 import DeviceDetailPage from './pages/DeviceDetailPage';
 import ComparePage from './pages/ComparePage';
+import DeviceFinderPage from './pages/DeviceFinderPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import BrandManagePage from './pages/admin/BrandManagePage';
 import DeviceManagePage from './pages/admin/DeviceManagePage';
@@ -60,6 +61,7 @@ function App() {
             <Route path="/brands" element={<BrandsPage />} />
             <Route path="/brands/:id" element={<BrandDetailPage />} />
             <Route path="/devices/:id" element={<DeviceDetailPage />} />
+            <Route path="/finder" element={<DeviceFinderPage />} />
             <Route path="/compare" element={<ComparePage />} />
           </Route>
 

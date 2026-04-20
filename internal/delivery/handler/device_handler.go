@@ -193,6 +193,52 @@ func (h *DeviceHandler) SearchDevices(ctx *gin.Context) {
 	response.Success(ctx, http.StatusOK, "Devices retrieved successfully", devices)
 }
 
+// FindDevices handles GET request to find devices by specification filters.
+// @Summary Find devices by specification filters
+// @Description Filter devices by model name and selected specification fields
+// @Tags devices
+// @Accept json
+// @Produce json
+// @Param name query string false "Device model name"
+// @Param brand_id query string false "Brand ID"
+// @Param os query string false "Operating system"
+// @Param chipset query string false "Chipset"
+// @Param cpu query string false "CPU"
+// @Param gpu query string false "GPU"
+// @Param memory query string false "Memory (internal)"
+// @Param display_size query string false "Display size"
+// @Param battery query string false "Battery type"
+// @Param nfc query string false "NFC support"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page (max 100)" default(10)
+// @Success 200 {object} response.ApiResponse{data=dto.DeviceListResponse}
+// @Failure 400 {object} response.ApiResponse
+// @Failure 500 {object} response.ApiResponse
+// @Router /api/v1/devices/finder [get]
+func (h *DeviceHandler) FindDevices(ctx *gin.Context) {
+	var query dto.DeviceFinderQuery
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		log.Printf("❌ Invalid finder query: %v", err)
+		response.Error(ctx, http.StatusBadRequest, "Invalid finder query", []response.ErrorResponse{
+			{Field: "query", Error: err.Error()},
+		})
+		return
+	}
+
+	query.Normalize()
+
+	devices, err := h.deviceService.FindDevicesBySpecs(ctx.Request.Context(), query)
+	if err != nil {
+		log.Printf("❌ Failed to find devices: %v", err)
+		response.Error(ctx, http.StatusInternalServerError, "Failed to find devices", []response.ErrorResponse{
+			{Field: "server", Error: err.Error()},
+		})
+		return
+	}
+
+	response.Success(ctx, http.StatusOK, "Devices retrieved successfully", devices)
+}
+
 // GetDevicesByBrandId handles GET request to retrieve devices by brand ID
 // @Summary Get devices by brand ID
 // @Description Get a paginated list of devices for a specific brand

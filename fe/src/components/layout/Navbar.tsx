@@ -16,6 +16,7 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/brands', label: 'Brands' },
+    { to: '/finder', label: 'Finder' },
     { to: '/compare', label: 'Compare' },
   ];
 

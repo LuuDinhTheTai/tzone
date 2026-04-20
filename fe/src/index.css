@@ -178,6 +178,26 @@ td {
   transform: translateY(0);
 }
 
+.finder-select {
+  color: var(--tzone-text-primary);
+  background-color: #1e293b;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.finder-select:hover {
+  border-color: rgba(167, 139, 250, 0.65);
+}
+
+.finder-select:focus {
+  border-color: var(--tzone-primary-light);
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
+}
+
+.finder-select option {
+  color: #f8fafc;
+  background-color: #0f172a;
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
   -webkit-background-clip: text;

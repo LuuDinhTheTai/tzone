@@ -23,6 +23,19 @@ type DeviceWithBrand struct {
 	Device  model.Device  `bson:"device"`
 }
 
+type DeviceFinderFilters struct {
+	Name        string
+	BrandID     string
+	OS          string
+	Chipset     string
+	CPU         string
+	GPU         string
+	Memory      string
+	DisplaySize string
+	Battery     string
+	NFC         string
+}
+
 func NewBrandRepository() *BrandRepository {
 	return &BrandRepository{
 		database:        "Cluster0",
@@ -481,5 +494,122 @@ func (r *BrandRepository) GetDevicesByBrandID(ctx context.Context, brandID bson.
 	}
 
 	log.Printf("✅ Retrieved %d devices for brand %s", len(devices), brandID.Hex())
+	return devices, total, nil
+}
+
+func buildDeviceFinderMatch(filters DeviceFinderFilters) ([]bson.M, error) {
+	regexFilter := func(field string, value string) bson.M {
+		pattern := regexp.QuoteMeta(value)
+		return bson.M{field: bson.M{"$regex": pattern, "$options": "i"}}
+	}
+
+	var conditions []bson.M
+	if filters.BrandID != "" {
+		brandObjectID, err := bson.ObjectIDFromHex(filters.BrandID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid brand ID format")
+		}
+		conditions = append(conditions, bson.M{"_id": brandObjectID})
+	}
+	if filters.Name != "" {
+		conditions = append(conditions, regexFilter("devices.model_name", filters.Name))
+	}
+	if filters.OS != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Platform.OS", filters.OS))
+	}
+	if filters.Chipset != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Platform.Chipset", filters.Chipset))
+	}
+	if filters.CPU != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Platform.CPU", filters.CPU))
+	}
+	if filters.GPU != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Platform.GPU", filters.GPU))
+	}
+	if filters.Memory != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Memory.Internal", filters.Memory))
+	}
+	if filters.DisplaySize != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Display.Size", filters.DisplaySize))
+	}
+	if filters.Battery != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Battery.Type", filters.Battery))
+	}
+	if filters.NFC != "" {
+		conditions = append(conditions, regexFilter("devices.specifications.Comms.NFC", filters.NFC))
+	}
+
+	return conditions, nil
+}
+
+// FindDevicesBySpecs retrieves paginated devices matching specification filters.
+func (r *BrandRepository) FindDevicesBySpecs(ctx context.Context, filters DeviceFinderFilters, page int, limit int) ([]DeviceWithBrand, int64, error) {
+	collection := r.GetBrandCollection()
+	skip := int64((page - 1) * limit)
+
+	conditions, err := buildDeviceFinderMatch(filters)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	countPipeline := mongo.Pipeline{{{Key: "$unwind", Value: "$devices"}}}
+	if len(conditions) > 0 {
+		countPipeline = append(countPipeline, bson.D{{Key: "$match", Value: bson.M{"$and": conditions}}})
+	}
+	countPipeline = append(countPipeline, bson.D{{Key: "$count", Value: "total"}})
+
+	countCursor, err := collection.Aggregate(ctx, countPipeline)
+	if err != nil {
+		log.Printf("❌ Error counting finder devices: %v", err)
+		return nil, 0, fmt.Errorf("failed to count finder devices: %w", err)
+	}
+	defer func() {
+		if err := countCursor.Close(ctx); err != nil {
+			log.Printf("⚠️ Error closing finder count cursor: %v", err)
+		}
+	}()
+
+	var countResults []struct {
+		Total int64 `bson:"total"`
+	}
+	if err := countCursor.All(ctx, &countResults); err != nil {
+		log.Printf("❌ Error decoding finder device count: %v", err)
+		return nil, 0, fmt.Errorf("failed to decode finder device count: %w", err)
+	}
+
+	var total int64
+	if len(countResults) > 0 {
+		total = countResults[0].Total
+	}
+
+	dataPipeline := mongo.Pipeline{{{Key: "$unwind", Value: "$devices"}}}
+	if len(conditions) > 0 {
+		dataPipeline = append(dataPipeline, bson.D{{Key: "$match", Value: bson.M{"$and": conditions}}})
+	}
+	dataPipeline = append(dataPipeline,
+		bson.D{{Key: "$project", Value: bson.M{"brand_id": "$_id", "device": "$devices"}}},
+		bson.D{{Key: "$sort", Value: bson.M{"device._id": -1}}},
+		bson.D{{Key: "$skip", Value: skip}},
+		bson.D{{Key: "$limit", Value: int64(limit)}},
+	)
+
+	cursor, err := collection.Aggregate(ctx, dataPipeline)
+	if err != nil {
+		log.Printf("❌ Error fetching finder devices: %v", err)
+		return nil, 0, fmt.Errorf("failed to fetch finder devices: %w", err)
+	}
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Printf("⚠️ Error closing finder cursor: %v", err)
+		}
+	}()
+
+	var devices []DeviceWithBrand
+	if err = cursor.All(ctx, &devices); err != nil {
+		log.Printf("❌ Error decoding finder devices: %v", err)
+		return nil, 0, fmt.Errorf("failed to decode finder devices: %w", err)
+	}
+
+	log.Printf("✅ Retrieved %d devices from finder query", len(devices))
 	return devices, total, nil
 }

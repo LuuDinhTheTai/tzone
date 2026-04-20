@@ -2,6 +2,7 @@ package dto
 
 import (
 	"mime/multipart"
+	"strings"
 
 	"github.com/LuuDinhTheTai/tzone/internal/model"
 )
@@ -34,6 +35,34 @@ func (q *PaginationQuery) Normalize() {
 type SearchQuery struct {
 	Name string `form:"name" binding:"required,min=1,max=100"`
 	PaginationQuery
+}
+
+type DeviceFinderQuery struct {
+	Name        string `form:"name"`
+	BrandID     string `form:"brand_id"`
+	OS          string `form:"os"`
+	Chipset     string `form:"chipset"`
+	CPU         string `form:"cpu"`
+	GPU         string `form:"gpu"`
+	Memory      string `form:"memory"`
+	DisplaySize string `form:"display_size"`
+	Battery     string `form:"battery"`
+	NFC         string `form:"nfc"`
+	PaginationQuery
+}
+
+func (q *DeviceFinderQuery) Normalize() {
+	q.PaginationQuery.Normalize()
+	q.Name = strings.TrimSpace(q.Name)
+	q.BrandID = strings.TrimSpace(q.BrandID)
+	q.OS = strings.TrimSpace(q.OS)
+	q.Chipset = strings.TrimSpace(q.Chipset)
+	q.CPU = strings.TrimSpace(q.CPU)
+	q.GPU = strings.TrimSpace(q.GPU)
+	q.Memory = strings.TrimSpace(q.Memory)
+	q.DisplaySize = strings.TrimSpace(q.DisplaySize)
+	q.Battery = strings.TrimSpace(q.Battery)
+	q.NFC = strings.TrimSpace(q.NFC)
 }
 
 type RegisterRequest struct {

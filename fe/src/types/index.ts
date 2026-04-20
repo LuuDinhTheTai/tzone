@@ -147,6 +147,20 @@ export interface DeviceListResponse {
   pagination: PaginationMeta;
 }
 
+export interface DeviceFinderParams {
+  brand_id?: string;
+  os?: string;
+  chipset?: string;
+  cpu?: string;
+  gpu?: string;
+  memory?: string;
+  display_size?: string;
+  battery?: string;
+  nfc?: string;
+  page?: number;
+  limit?: number;
+}
+
 // ==================== Auth ====================
 
 export interface LoginRequest {

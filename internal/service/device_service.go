@@ -222,6 +222,49 @@ func (s *DeviceService) SearchDevicesByName(ctx context.Context, name string, pa
 	return response, nil
 }
 
+// FindDevicesBySpecs retrieves paginated devices matching specification filters.
+func (s *DeviceService) FindDevicesBySpecs(ctx context.Context, query dto.DeviceFinderQuery) (*dto.DeviceListResponse, error) {
+	log.Printf("🔄 Finding devices by specification filters")
+
+	filters := repository.DeviceFinderFilters{
+		Name:        query.Name,
+		BrandID:     query.BrandID,
+		OS:          query.OS,
+		Chipset:     query.Chipset,
+		CPU:         query.CPU,
+		GPU:         query.GPU,
+		Memory:      query.Memory,
+		DisplaySize: query.DisplaySize,
+		Battery:     query.Battery,
+		NFC:         query.NFC,
+	}
+
+	devices, total, err := s.mongoDbRepo.FindDevicesBySpecs(ctx, filters, query.Page, query.Limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find devices by specs: %w", err)
+	}
+
+	var deviceResponses []dto.DeviceResponse
+	for _, device := range devices {
+		deviceResponses = append(deviceResponses, dto.DeviceResponse{
+			ID:             device.Device.ID.Hex(),
+			BrandID:        device.BrandID.Hex(),
+			ModelName:      device.Device.ModelName,
+			ImageUrl:       device.Device.ImageUrl,
+			Specifications: device.Device.Specifications,
+		})
+	}
+
+	response := &dto.DeviceListResponse{
+		Devices:    deviceResponses,
+		Total:      int(total),
+		Pagination: buildPaginationMeta(total, query.Page, query.Limit),
+	}
+
+	log.Printf("✅ Retrieved %d matching devices from finder", response.Total)
+	return response, nil
+}
+
 // UpdateDevice updates existing device and handles brand changing
 func (s *DeviceService) UpdateDevice(ctx context.Context, id string, req dto.UpdateDeviceRequest) (*dto.DeviceResponse, error) {
 	log.Printf("🔄 Updating device with ID: %s", id)

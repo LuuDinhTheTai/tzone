@@ -5,6 +5,7 @@ import type {
   DeviceListResponse,
   CreateDeviceRequest,
   UpdateDeviceRequest,
+  DeviceFinderParams,
 } from '../types';
 
 const buildDeviceFormData = (data: CreateDeviceRequest | UpdateDeviceRequest) => {
@@ -29,6 +30,11 @@ export const devicesApi = {
   search: (name: string, page = 1, limit = 10) =>
     client.get<ApiResponse<DeviceListResponse>>('/api/v1/devices/search', {
       params: { name, page, limit },
+    }),
+
+  finder: (params: DeviceFinderParams) =>
+    client.get<ApiResponse<DeviceListResponse>>('/api/v1/devices/finder', {
+      params,
     }),
 
   getById: (id: string) =>
