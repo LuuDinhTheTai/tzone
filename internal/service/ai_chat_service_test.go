@@ -53,3 +53,43 @@ func TestBuildCardsSkipsUnknownIDs(t *testing.T) {
 		t.Fatalf("expected card ID %s, got %s", firstID, cards[0].ID)
 	}
 }
+
+func TestNormalizeYouTubeURL(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want bool
+	}{
+		{name: "youtube watch", raw: "https://www.youtube.com/watch?v=abc", want: true},
+		{name: "youtu short", raw: "https://youtu.be/abc", want: true},
+		{name: "m youtube", raw: "https://m.youtube.com/watch?v=abc", want: true},
+		{name: "non youtube", raw: "https://vimeo.com/123", want: false},
+		{name: "invalid", raw: "not-a-url", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := normalizeYouTubeURL(tt.raw)
+			if (got != "") != tt.want {
+				t.Fatalf("normalizeYouTubeURL(%q)=%q, want valid=%v", tt.raw, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSanitizeYouTubeVideos(t *testing.T) {
+	raw := []geminiVideoReplyRow{
+		{Title: "Review 1", URL: "https://www.youtube.com/watch?v=abc"},
+		{Title: "Review 1 duplicate", URL: "https://www.youtube.com/watch?v=abc"},
+		{Title: "Bad host", URL: "https://example.com/video"},
+		{Title: "", URL: "https://youtu.be/xyz"},
+	}
+
+	videos := sanitizeYouTubeVideos(raw, 3)
+	if len(videos) != 2 {
+		t.Fatalf("expected 2 valid videos, got %d", len(videos))
+	}
+	if videos[1].Title == "" {
+		t.Fatal("expected fallback title for empty title")
+	}
+}

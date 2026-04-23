@@ -11,5 +11,6 @@ func MapAIRoutes(r *gin.Engine, aiHandler *handler.AIHandler) {
 	aiGroup.Use(middleware.APIRateLimit())
 	{
 		aiGroup.POST("/chat", aiHandler.RecommendDevices)
+		aiGroup.POST("/video-reviews", aiHandler.GetVideoReviews)
 	}
 }

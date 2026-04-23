@@ -164,3 +164,56 @@ func (r *AIChatRecommendRequest) Normalize() {
 		r.Limit = 6
 	}
 }
+
+type AIVideoReviewRequest struct {
+	DeviceName string `json:"device_name" binding:"required,min=2,max=120"`
+	Limit      int    `json:"limit"`
+}
+
+func (r *AIVideoReviewRequest) Normalize() {
+	r.DeviceName = strings.TrimSpace(r.DeviceName)
+	if r.Limit <= 0 {
+		r.Limit = 3
+	}
+	if r.Limit > 6 {
+		r.Limit = 6
+	}
+}
+
+type CreateReviewRequest struct {
+	Rating  int    `json:"rating" binding:"required,min=1,max=5"`
+	Comment string `json:"comment" binding:"required,min=1,max=2000"`
+}
+
+func (r *CreateReviewRequest) Normalize() {
+	r.Comment = strings.TrimSpace(r.Comment)
+}
+
+type UpdateReviewRequest struct {
+	Rating  int    `json:"rating" binding:"required,min=1,max=5"`
+	Comment string `json:"comment" binding:"required,min=1,max=2000"`
+}
+
+func (r *UpdateReviewRequest) Normalize() {
+	r.Comment = strings.TrimSpace(r.Comment)
+}
+
+type SetRatingRequest struct {
+	Rating int `json:"rating" binding:"required,min=1,max=5"`
+}
+
+type SetCommentRequest struct {
+	Comment string `json:"comment" binding:"required,min=1,max=2000"`
+}
+
+func (r *SetCommentRequest) Normalize() {
+	r.Comment = strings.TrimSpace(r.Comment)
+}
+
+type UpdateCommentRequest struct {
+	Comment string `json:"comment" binding:"required,min=1,max=2000"`
+}
+
+func (r *UpdateCommentRequest) Normalize() {
+	r.Comment = strings.TrimSpace(r.Comment)
+}

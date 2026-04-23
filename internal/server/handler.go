@@ -42,6 +42,7 @@ func (s *Server) MapHandlers() error {
 	userRepo := repository.NewUserRepository(s.db)
 	tokenRepo := repository.NewRefreshTokenRepository(s.db)
 	favoriteRepo := repository.NewFavoriteRepository(s.db)
+	reviewRepo := repository.NewReviewRepository(s.db)
 	permissionRepo := repository.NewPermissionRepository(s.db)
 
 	brandRepo := repository.NewBrandRepository()
@@ -61,6 +62,7 @@ func (s *Server) MapHandlers() error {
 	brandService := service.NewBrandService(brandRepo, cacheService)
 	deviceService := service.NewDeviceService(deviceRepo, cacheService)
 	favoriteService := service.NewFavoriteService(favoriteRepo, deviceRepo)
+	reviewService := service.NewReviewService(reviewRepo)
 	permissionService := service.NewPermissionService(permissionRepo)
 	aiService, err := service.NewAIChatService(s.cfg.AI)
 	if err != nil {
@@ -74,6 +76,7 @@ func (s *Server) MapHandlers() error {
 	brandHandler := handler.NewBrandHandler(brandService)
 	deviceHandler := handler.NewDeviceHandler(deviceService)
 	favoriteHandler := handler.NewFavoriteHandler(favoriteService)
+	reviewHandler := handler.NewReviewHandler(reviewService)
 	authHandler := handler.NewAuthHandler(authService)
 	aiHandler := handler.NewAIHandler(aiService)
 	log.Printf("✅ Handlers initialized")
@@ -84,6 +87,7 @@ func (s *Server) MapHandlers() error {
 	route.MapBrandRoutes(s.r, brandHandler, permissionService)
 	route.MapDeviceRoutes(s.r, deviceHandler, permissionService)
 	route.MapFavoriteRoutes(s.r, favoriteHandler)
+	route.MapReviewRoutes(s.r, reviewHandler)
 	route.MapAuthRoutes(s.r, authHandler)
 	route.MapAIRoutes(s.r, aiHandler)
 	log.Printf("✅ Routes initialized")

@@ -46,3 +46,31 @@ func (h *AIHandler) RecommendDevices(ctx *gin.Context) {
 
 	response.Success(ctx, http.StatusOK, "AI recommendations generated", result)
 }
+
+func (h *AIHandler) GetVideoReviews(ctx *gin.Context) {
+	var req dto.AIVideoReviewRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.Error(ctx, http.StatusBadRequest, "invalid video review request", []response.ErrorResponse{{Field: "request", Error: err.Error()}})
+		return
+	}
+
+	req.Normalize()
+
+	result, err := h.aiService.FindVideoReviews(ctx.Request.Context(), req)
+	if err != nil {
+		log.Printf("❌ AI video review failed: %v", err)
+		statusCode := http.StatusInternalServerError
+		message := "Unable to fetch video reviews"
+
+		var geminiErr *service.GeminiAPIError
+		if errors.As(err, &geminiErr) {
+			statusCode = geminiErr.StatusCode
+			message = geminiErr.FriendlyMessage()
+		}
+
+		response.Error(ctx, statusCode, message, []response.ErrorResponse{{Field: "ai", Error: err.Error()}})
+		return
+	}
+
+	response.Success(ctx, http.StatusOK, "AI video reviews generated", result)
+}

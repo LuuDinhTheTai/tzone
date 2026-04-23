@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/LuuDinhTheTai/tzone/internal/model"
+import (
+	"time"
+
+	"github.com/LuuDinhTheTai/tzone/internal/model"
+)
 
 type PaginationMeta struct {
 	Page       int   `json:"page"`
@@ -60,4 +64,37 @@ type RecommendedDeviceCard struct {
 type AIChatRecommendResponse struct {
 	Reply   string                  `json:"reply"`
 	Devices []RecommendedDeviceCard `json:"devices"`
+}
+
+type AIVideoReview struct {
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
+type AIVideoReviewResponse struct {
+	Reply  string          `json:"reply"`
+	Videos []AIVideoReview `json:"videos"`
+}
+
+type ReviewResponse struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	UserEmail string    `json:"user_email"`
+	DeviceID  string    `json:"device_id"`
+	Rating    int       `json:"rating"`
+	Comment   string    `json:"comment"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ReviewListResponse struct {
+	Reviews       []ReviewResponse `json:"reviews"`
+	Total         int              `json:"total"`
+	Pagination    PaginationMeta   `json:"pagination"`
+	RatingSummary RatingSummary    `json:"rating_summary"`
+}
+
+type RatingSummary struct {
+	Average float64 `json:"average"`
+	Count   int64   `json:"count"`
 }

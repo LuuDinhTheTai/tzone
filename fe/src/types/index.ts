@@ -275,3 +275,41 @@ export interface AIChatResponse {
   devices: RecommendedDeviceCard[];
 }
 
+export interface AIVideoReviewRequest {
+  device_name: string;
+  limit?: number;
+}
+
+export interface AIVideoReview {
+  title: string;
+  url: string;
+}
+
+export interface AIVideoReviewResponse {
+  reply: string;
+  videos: AIVideoReview[];
+}
+
+export interface Review {
+  id: string;
+  user_id: string;
+  user_email: string;
+  device_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RatingSummary {
+  average: number;
+  count: number;
+}
+
+export interface ReviewListResponse {
+  reviews: Review[];
+  total: number;
+  pagination: PaginationMeta;
+  rating_summary: RatingSummary;
+}
+
